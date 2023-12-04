@@ -1848,6 +1848,7 @@ The following extractors use this feature:
 
 #### niconico
 * `segment_duration`: Segment duration in milliseconds for HLS-DMC formats. Use it at your own risk since this feature **may result in your account termination.**
+* `lang`: Value of the Accept-Language header to use for download requests. Defaults to `en-us`
 
 #### youtubewebarchive
 * `check_all`: Try to check more at the cost of more requests. One or more of `thumbnails`, `captures`
