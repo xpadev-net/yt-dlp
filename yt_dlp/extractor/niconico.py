@@ -2,10 +2,12 @@ import datetime
 import functools
 import itertools
 import json
+import math
 import re
 import time
 
 from urllib.parse import urlparse
+from xml.dom import minidom
 
 from .common import InfoExtractor, SearchInfoExtractor
 from ..networking import Request
@@ -547,10 +549,16 @@ class NiconicoIE(InfoExtractor):
             return
 
         return {
-            'comments': [{
-                'ext': 'json',
-                'data': json.dumps(comments),
-            }],
+            'comments': [
+                {
+                    'ext': 'json',
+                    'data': json.dumps(comments),
+                },
+                {
+                    'ext': 'xml',
+                    'data': self._convert_to_nicovideo_common_xml(comments),
+                }
+            ],
         }
 
     def _extract_new_comments(self, endpoint, video_id, params, thread_key):
@@ -570,6 +578,24 @@ class NiconicoIE(InfoExtractor):
             },
             note='Downloading comments (new)', errnote='Failed to download comments (new)')
         return traverse_obj(comments, ('data', 'threads', ..., 'comments', ...))
+
+    def _convert_to_nicovideo_common_xml(self,comments):
+        impl = minidom.getDOMImplementation()
+        doc = impl.createDocument(None, 'packet', None)
+        for comment in comments:
+            chat = doc.createElement('chat')
+            date = datetime.datetime.strptime(comment.get('postedAt'), '%Y-%m-%dT%H:%M:%S+09:00')
+            chat.setAttribute('vpos', str(math.floor(comment.get('vposMs')/10)))
+            chat.setAttribute('date', str(int(date.timestamp())))
+            chat.setAttribute('date_usec', str(0))
+            chat.setAttribute('user_id', str(comment.get('userId')))
+            chat.setAttribute('premium', str(1 if bool(comment.get('isPremium')) else 0))
+            chat.setAttribute('score', str(comment.get('score')))
+            chat.setAttribute('mail', ' '.join(comment.get('commands')))
+            txt = doc.createTextNode(comment.get('body'))
+            chat.appendChild(txt)
+            doc.documentElement.appendChild(chat)
+        return doc.toprettyxml(indent='  ')
 
 
 class NiconicoPlaylistBaseIE(InfoExtractor):
