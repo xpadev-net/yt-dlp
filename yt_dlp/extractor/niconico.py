@@ -177,7 +177,6 @@ class NiconicoIE(InfoExtractor):
     _API_HEADERS = {
         'X-Frontend-ID': '6',
         'X-Frontend-Version': '0',
-        'X-Niconico-Language': 'en-us',
         'Referer': 'https://www.nicovideo.jp/',
         'Origin': 'https://www.nicovideo.jp',
     }
@@ -440,11 +439,15 @@ class NiconicoIE(InfoExtractor):
         }
 
     def _real_extract(self, url):
+        lang = self._configuration_arg('lang', default='en-us')
+        lang_header = {
+            'Accept-Language': lang,
+        }
         video_id = self._match_id(url)
 
         try:
             webpage, handle = self._download_webpage_handle(
-                'https://www.nicovideo.jp/watch/' + video_id, video_id)
+                'https://www.nicovideo.jp/watch/' + video_id, video_id, headers=lang_header)
             if video_id.startswith('so'):
                 video_id = self._match_id(handle.url)
 
@@ -455,12 +458,12 @@ class NiconicoIE(InfoExtractor):
             try:
                 api_data = self._download_json(
                     'https://www.nicovideo.jp/api/watch/v3/%s?_frontendId=6&_frontendVersion=0&actionTrackId=AAAAAAAAAA_%d' % (video_id, round(time.time() * 1000)), video_id,
-                    note='Downloading API JSON', errnote='Unable to fetch data')['data']
+                    note='Downloading API JSON', errnote='Unable to fetch data', headers=lang_header)['data']
             except ExtractorError:
                 try:
                     api_data = self._download_json(
                         'https://www.nicovideo.jp/api/watch/v3_guest/%s?_frontendId=6&_frontendVersion=0&actionTrackId=AAAAAAAAAA_%d' % (video_id, round(time.time() * 1000)), video_id,
-                        note='Downloading API JSON', errnote='Unable to fetch data')['data']
+                        note='Downloading API JSON', errnote='Unable to fetch data', headers=lang_header)['data']
                 except ExtractorError:
                     if not isinstance(e.cause, HTTPError):
                         raise
