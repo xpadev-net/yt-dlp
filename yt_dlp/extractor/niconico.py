@@ -582,13 +582,13 @@ class NiconicoIE(InfoExtractor):
             note='Downloading comments (new)', errnote='Failed to download comments (new)')
         return traverse_obj(comments, ('data', 'threads', ..., 'comments', ...))
 
-    def _convert_to_nicovideo_common_xml(self,comments):
+    def _convert_to_nicovideo_common_xml(self, comments):
         impl = minidom.getDOMImplementation()
         doc = impl.createDocument(None, 'packet', None)
         for comment in comments:
             chat = doc.createElement('chat')
             date = datetime.datetime.strptime(comment.get('postedAt'), '%Y-%m-%dT%H:%M:%S+09:00')
-            chat.setAttribute('vpos', str(math.floor(comment.get('vposMs')/10)))
+            chat.setAttribute('vpos', str(math.floor(comment.get('vposMs') / 10)))
             chat.setAttribute('date', str(int(date.timestamp())))
             chat.setAttribute('date_usec', str(0))
             chat.setAttribute('user_id', str(comment.get('userId')))
